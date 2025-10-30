@@ -1,0 +1,183 @@
+---
+title: "Causal Inference for Latent Factors<br> Underlying Psychopathology"
+authors: "Laura Sità"
+format:
+  revealjs:
+    center: true
+    embed-resources: true
+    slide-number: true
+    footer: "HandZone October 30th, 2025"
+    theme: simple
+    output-file: "nmf.html"
+toc: true
+execute:
+  cache: false
+  freeze: false
+include-in-header:
+  - text: |
+      <style>
+      /* Titolo slide di copertina */
+      #title-slide .title {
+        font-size: 1.5em;
+        color: #900000;
+      }
+
+      /* Logo nella copertina */
+      #title-slide::after {
+        content: "";
+        display: block;
+        background-image: url("images/logo.png");
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: contain;
+        height: 250px;
+        margin-top: 1.5em;
+      }
+
+      /* Titoli interni delle slide */
+      .reveal h1, .reveal h2, .reveal h3 {
+        color: #900000 !important;
+      }
+
+      /* Dimensione leggermente minore per h2 */
+      .reveal h2 {
+        font-size: 1.2em !important;
+      }
+
+      /* testo giustificato */
+      .reveal p, .reveal li {
+        text-align: justify !important;
+        text-justify: inter-word;
+      }
+
+      /* footer centrato */
+       .reveal .slide-footer,
+      .reveal .footer,
+      .reveal .revealjs-footer {
+        position: fixed; left: 0; right: 0; bottom: 10px;
+        width: 100%;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        text-align: center !important;
+      }
+      </style>
+---
+
+```{r setup}
+#| include: false
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(knitr)
+library(ggridges)
+library(ggplot2)
+```
+
+# Problem
+
+Classification of psychopathology
+
+<div style="margin-top:1.25cm;"></div>
+**Traditional taxonomies:** categorical diagnostic systems 
+<p style="font-size:85%; text-align:left;">
+(e.g., DSM, ICD)
+</p>
+
+<div style="margin-top:1cm;"></div>
+**Recent models:** dimensional and transdiagnostic approaches 
+<p style="font-size:85%; text-align:left;">
+(e.g. Hierarchical Taxonomy of Psychopathology model by Kotov et al., 2017) 
+</p>
+
+# Research Question
+
+How can we uncover **latent factors** across disorders?
+
+- cfa o efa
+- Proposed approach (inspired by Landy et al., 2025): **Non-negative Matrix Factorization (NMF)**
+
+# Proposed approach
+
+```{r nmf}
+#| echo: false
+#| include: false
+#source("R/fa-vs-nmf.R")
+```
+
+## NMF
+
+<p style="font-size:80%; text-align:left; line-height:1.2;">
+NMF factorizes the full observed data matrix  
+</p>
+
+<center style="font-size:70%">
+$M_{kg} \in \mathbb{R}_{\ge 0}^{K \times G}$,  
+where each row $k$ represents an observed feature (e.g., test item)  
+and each column $g$ represents an individual.  
+</center>
+
+<div style="margin-top:1cm;"></div>
+<p style="font-size:80%; text-align:left; line-height:1.2;">
+It decomposes $M$ into two lower-rank nonnegative matrices:
+</p>
+
+<center style="font-size:65%">
+$P \in \mathbb{R}_{\ge 0}^{K \times N}$ → loadings of observed variables on $N$ latent factors  
+<br>
+$E \in \mathbb{R}_{\ge 0}^{N \times G}$ → expression (or weights) of latent factors across individuals  
+</center>
+
+<p style="font-size:80%; text-align:left; line-height:1.2;">
+$$
+M_{kg} = \sum_{n=1}^{N} P_{kn} E_{ng}
+$$
+</p>
+
+# First step
+
+- Use the NMF on a dataset of ordinal data (Likert scale)
+
+- Estimate **latent factors**
+
+- Compare them with those obtained through **CFA?**
+
+## codice
+
+mostra il codice sul dataset di tommaso
+
+## output
+
+mostra outout
+
+# Second step
+
+how to make the NMF recognize that items within the same questionnaire have a structure
+
+# Estensions
+
+If the results are encouraging ...
+
+- <span style="color:#900000;">Third step:</span> use NMF to find latent factors shared within the same spectrum of symptoms 
+
+- <span style="color:#900000;">Fourth step:</span> use causal NMF to find latent factors across different treatment on the same spectrum of symptoms
+
+# Materials 
+All materials are available on GitHub in the `project` folder of the repository <a href="https://github.com/laurasitaunipd/handzone.git" target="_blank">laurasitaunipd/handzone</a>
+
+# Bibliography
+
+<div style="margin-top:1cm;"></div>
+<p style="font-size:70%; text-align:left; line-height:1.2;">
+Kotov, R., Krueger, R. F., Watson, D., Achenbach, T. M., Althoff, R. R., Bagby, R. M., ... & Zimmerman, M. (2017). The Hierarchical Taxonomy of Psychopathology (HiTOP): A dimensional alternative to traditional nosologies. Journal of abnormal psychology, 126(4), 454.
+</p>
+
+<div style="margin-top:1cm;"></div>
+<p style="font-size:70%; text-align:left; line-height:1.2;">
+Landy, J. M., Basava, N., & Parmigiani, G. (2025). bayesNMF: Fast Bayesian Poisson NMF with Automatically Learned Rank Applied to Mutational Signatures. arXiv preprint arXiv:2502.18674.
+</p>
+
+<div style="margin-top:1cm;"></div>
+<p style="font-size:70%; text-align:left; line-height:1.2;">
+Landy, J. M., Zorzetto, D., De Vito, R., & Parmigiani, G. (2025). Causal Inference for Latent Outcomes Learned with Factor Models. arXiv preprint arXiv:2506.20549.
+</p>
+
+# Supplemental Materials
