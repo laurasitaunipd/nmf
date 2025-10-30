@@ -62,6 +62,7 @@ include-in-header:
         text-align: center !important;
       }
       </style>
+  
 ---
 
 ```{r setup}
@@ -76,9 +77,7 @@ library(ggplot2)
 
 Classification of psychopathology
 
-::: {style="margin-top:1.25cm;"}
-:::
-
+<div style="margin-top:1.5cm;"></div>
 **Traditional taxonomies:** categorical diagnostic systems
 
 <p style="font-size:85%; text-align:left;">
@@ -87,9 +86,7 @@ Classification of psychopathology
 
 </p>
 
-::: {style="margin-top:1cm;"}
-:::
-
+<div style="margin-top:1cm;"></div>
 **Recent models:** dimensional and transdiagnostic approaches
 
 <p style="font-size:85%; text-align:left;">
@@ -105,15 +102,8 @@ How can we uncover **latent factors** across disorders?
 -   Factor Analysis
 -   Proposed approach (inspired by Landy et al., 2025): **Non-negative Matrix Factorization (NMF)**
 
-# Proposed approach
 
-```{r nmf}
-#| echo: false
-#| include: false
-#source("R/fa-vs-nmf.R")
-```
-
-## NMF
+# NMF
 
 <p style="font-size:80%; text-align:left; line-height:1.2;">
 
@@ -129,9 +119,7 @@ and each column $g$ represents an individual.
 
 </center>
 
-::: {style="margin-top:1cm;"}
-:::
-
+<div style="margin-top:1cm;"></div>
 <p style="font-size:80%; text-align:left; line-height:1.2;">
 
 It decomposes $M$ into two lower-rank nonnegative matrices:
@@ -161,10 +149,6 @@ $$
 
 -   Compare them with those obtained through **factor analysis**
 
-## codice
-
-mostra il codice sul dataset di tommaso
-
 ## matrici item x fattori tramite EFA vs NMF
 
 ![](images/plot2-efa-nmf.png){fig-align="center"}
@@ -191,31 +175,102 @@ All materials are available on GitHub at <a href="https://github.com/laurasitaun
 
 # Bibliography
 
-::: {style="margin-top:1cm;"}
-:::
-
+<div style="margin-top:1cm;"></div>
 <p style="font-size:70%; text-align:left; line-height:1.2;">
-
 Kotov, R., Krueger, R. F., Watson, D., Achenbach, T. M., Althoff, R. R., Bagby, R. M., ... & Zimmerman, M. (2017). The Hierarchical Taxonomy of Psychopathology (HiTOP): A dimensional alternative to traditional nosologies. Journal of abnormal psychology, 126(4), 454.
-
 </p>
 
-::: {style="margin-top:1cm;"}
-:::
-
+<div style="margin-top:1cm;"></div>
 <p style="font-size:70%; text-align:left; line-height:1.2;">
-
 Landy, J. M., Basava, N., & Parmigiani, G. (2025). bayesNMF: Fast Bayesian Poisson NMF with Automatically Learned Rank Applied to Mutational Signatures. arXiv preprint arXiv:2502.18674.
-
 </p>
 
-::: {style="margin-top:1cm;"}
-:::
-
+<div style="margin-top:1cm;"></div>
 <p style="font-size:70%; text-align:left; line-height:1.2;">
-
 Landy, J. M., Zorzetto, D., De Vito, R., & Parmigiani, G. (2025). Causal Inference for Latent Outcomes Learned with Factor Models. arXiv preprint arXiv:2506.20549.
-
 </p>
 
 # Supplemental Materials
+
+```{r approach}
+#| echo: false
+#| include: false
+#source("R/fa-vs-nmf.R")
+```
+
+## 
+
+EFA
+
+```{r efa}
+#| eval: false
+#| echo: true
+risultato_fa <- factanal(item_data_complete, 
+                         factors = 5, 
+                         rotation = "promax", 
+                         scores = "regression")
+```
+
+##
+
+funzione pacchetto `bayesNMF`
+
+```{r nmf}
+#| eval: false
+#| echo: true
+
+result <- bayesNMF(
+    data = M_t,
+    likelihood = "normal",
+    prior = "truncnormal",
+    rank = 5
+  )
+
+MAP <- result$get_MAP()
+E <- MAP$E
+E <- as.matrix(E)
+tE = t(E)
+```
+
+##
+
+confronto EFA e NMF
+
+```{r efa-nmf}
+#| eval: false
+#| echo: true
+allScores = cbind(tE,efa_scores)
+round(cor(allScores),3)
+
+corrplot(
+  cor(allScores),
+  method = "color",   # fill cells with colors
+  type = "full",      # show full matrix
+  addCoef.col = "black",   # show correlation coefficients
+  number.cex = 0.7,        
+  tl.cex = 0.8            
+)
+```
+
+## 
+
+CFA
+
+```{r cfa}
+#| eval: false
+#| echo: true
+
+model = "
+SMD =~ bessi_1 + bessi_6 + bessi_11 + bessi_16 + bessi_21 + bessi_26 + bessi_31 + bessi_36 + bessi_41 
+IND =~ bessi_5 + bessi_10 + bessi_15 + bessi_20 + bessi_25 + bessi_30 + bessi_35 + bessi_40 + bessi_45
+COD =~ bessi_3 + bessi_8 + bessi_13 + bessi_18 + bessi_23 + bessi_28 + bessi_33 + bessi_38 + bessi_43 
+SED =~ bessi_2 + bessi_7 + bessi_12 + bessi_17 + bessi_22 + bessi_27 + bessi_32 + bessi_37 + bessi_42 
+ESD =~ bessi_4 + bessi_9 + bessi_14 + bessi_19 + bessi_24 + bessi_29 + bessi_34 + bessi_39 + bessi_44
+"
+fit = cfa(model=model, data=dati, ordered=T)
+summary(fit, standardized=T)
+fitMeasures(fit, fit.measures=c("rmsea","srmr","cfi","nnfi"))
+
+modificationIndices(fit, sort.=T)[1:10,]
+
+```
