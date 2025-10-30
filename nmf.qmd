@@ -87,7 +87,7 @@ Classification of psychopathology
 </p>
 
 <div style="margin-top:1cm;"></div>
-**Recent models:** dimensional and transdiagnostic approaches
+**Recent models:** dimensional and transdiagnostic approaches, network of symptoms
 
 <p style="font-size:85%; text-align:left;">
 
@@ -97,40 +97,27 @@ Classification of psychopathology
 
 # Research Question
 
-How can we uncover **latent factors** across disorders?
+How can we identify **latent factors**?
 
 -   Factor Analysis
--   Proposed approach (inspired by Landy et al., 2025): **Non-negative Matrix Factorization (NMF)**
+-   Proposed approach (inspired by Landy et al., 2025a): **Non-negative Matrix Factorization (NMF)**
 
 
 # NMF
 
+<div style="margin-top:1cm;"></div>
 <p style="font-size:80%; text-align:left; line-height:1.2;">
-
-NMF factorizes the full observed data matrix
-
+$M_{kg} \in \mathbb{R}_{\ge 0}^{K \times G}$ is the full observed data matrix (test item x subject)
 </p>
-
-<center style="font-size:70%">
-
-$M_{kg} \in \mathbb{R}_{\ge 0}^{K \times G}$,\
-where each row $k$ represents an observed feature (e.g., test item)\
-and each column $g$ represents an individual.
-
-</center>
 
 <div style="margin-top:1cm;"></div>
 <p style="font-size:80%; text-align:left; line-height:1.2;">
-
-It decomposes $M$ into two lower-rank nonnegative matrices:
-
+NMF decomposes $M$ into two lower-rank nonnegative matrices:
 </p>
 
 <center style="font-size:65%">
-
-$P \in \mathbb{R}_{\ge 0}^{K \times N}$ → loadings of observed variables on $N$ latent factors\
-<br> $E \in \mathbb{R}_{\ge 0}^{N \times G}$ → expression (or weights) of latent factors across individuals
-
+- $P \in \mathbb{R}_{\ge 0}^{K \times N}$ → loadings of [observed variables]{style="color:#900000;"} on [$N$ latent factors]{style="color:#900000;"}  (test item x latent factor)
+- $E \in \mathbb{R}_{\ge 0}^{N \times G}$ → expression of latent factors across individuals (latent factor x subject)
 </center>
 
 <p style="font-size:80%; text-align:left; line-height:1.2;">
@@ -143,11 +130,11 @@ $$
 
 # First step
 
--   Use the NMF on a dataset of ordinal data (Likert scale)
+-   Dataset of ordinal data (e.g. on a Likert scale)
 
--   Estimate **latent factors**
+-   Estimate **latent factors** through **factor analysis** and **NMF**
 
--   Compare them with those obtained through **factor analysis**
+-   Compare the results using the correlation matrix of factor loadings
 
 ## matrici item x fattori tramite EFA vs NMF
 
@@ -159,15 +146,15 @@ $$
 
 # Second step
 
-how to make the NMF recognize that items within the same questionnaire have a structure
+how to make the NMF recognize that structure within a questionaire (item-> factor)... confirmatoryNMF?
 
 # Estensions
 
 If the results are encouraging ...
 
--   [Third step:]{style="color:#900000;"} use NMF to find latent factors shared within the same spectrum of symptoms
+-   [Third step:]{style="color:#900000;"} use NMF to identify latent factors shared within the same spectrum of symptoms
 
--   [Fourth step:]{style="color:#900000;"} use causal NMF to find latent factors across different treatment on the same spectrum of symptoms
+-   [Fourth step:]{style="color:#900000;"} use causal NMF (Landy et al., 2025b) to study the effect of different treatments on the same spectrum of symptoms
 
 # Materials
 
@@ -182,12 +169,12 @@ Kotov, R., Krueger, R. F., Watson, D., Achenbach, T. M., Althoff, R. R., Bagby, 
 
 <div style="margin-top:1cm;"></div>
 <p style="font-size:70%; text-align:left; line-height:1.2;">
-Landy, J. M., Basava, N., & Parmigiani, G. (2025). bayesNMF: Fast Bayesian Poisson NMF with Automatically Learned Rank Applied to Mutational Signatures. arXiv preprint arXiv:2502.18674.
+Landy, J. M., Basava, N., & Parmigiani, G. (2025a). bayesNMF: Fast Bayesian Poisson NMF with Automatically Learned Rank Applied to Mutational Signatures. arXiv preprint arXiv:2502.18674.
 </p>
 
 <div style="margin-top:1cm;"></div>
 <p style="font-size:70%; text-align:left; line-height:1.2;">
-Landy, J. M., Zorzetto, D., De Vito, R., & Parmigiani, G. (2025). Causal Inference for Latent Outcomes Learned with Factor Models. arXiv preprint arXiv:2506.20549.
+Landy, J. M., Zorzetto, D., De Vito, R., & Parmigiani, G. (2025b). Causal Inference for Latent Outcomes Learned with Factor Models. arXiv preprint arXiv:2506.20549.
 </p>
 
 # Supplemental Materials
@@ -207,7 +194,7 @@ EFA
 #| echo: true
 risultato_fa <- factanal(item_data_complete, 
                          factors = 5, 
-                         rotation = "promax", 
+                         rotation = "promax", # possible factors corr
                          scores = "regression")
 ```
 
@@ -227,9 +214,8 @@ result <- bayesNMF(
   )
 
 MAP <- result$get_MAP()
-E <- MAP$E
-E <- as.matrix(E)
-tE = t(E)
+P <- MAP$P
+P <- as.matrix(P)
 ```
 
 ##
@@ -239,7 +225,7 @@ confronto EFA e NMF
 ```{r efa-nmf}
 #| eval: false
 #| echo: true
-allScores = cbind(tE,efa_scores)
+allLoadings = cbind(P,efa_loadings)
 round(cor(allScores),3)
 
 corrplot(
@@ -273,4 +259,27 @@ fitMeasures(fit, fit.measures=c("rmsea","srmr","cfi","nnfi"))
 
 modificationIndices(fit, sort.=T)[1:10,]
 
+```
+
+##
+
+confronto CFA e NMF
+
+```{r cfa-nmf}
+#| eval: false
+#| echo: true
+
+lambda = inspect(fit, what = "std")$lambda
+lambda <- lambda[order(as.numeric(gsub("bessi_", "", rownames(lambda)))), ]
+
+allLoadings = cbind(P,lambda)
+
+corrplot(
+  cor(allLoadings),
+  method = "color",   # fill cells with colors
+  type = "full",      # show full matrix
+  addCoef.col = "black",   # show correlation coefficients
+  number.cex = 0.7,        # text size for numbers
+  tl.cex = 0.8             # text size for labels
+)
 ```
