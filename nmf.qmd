@@ -130,11 +130,11 @@ $$
 
 - Compare the two methods by examining the **correlation matrix of factor loadings**
 
-## EFA vs NMF: ItemxFactor Loading Matrices
+## EFA vs NMF: correlation matrix of factor loadings
 
 ![](images/plot2-efa-nmf.png){fig-align="center"}
 
-## CFA vs NMF: ItemxFactor Loading Matrices
+## CFA vs NMF: correlation matrix of factor loadings
 
 ![](images/plot4-cfa-nmf.png){fig-align="center"}
 
