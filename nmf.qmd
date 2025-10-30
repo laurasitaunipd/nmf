@@ -81,18 +81,14 @@ Classification of psychopathology
 **Traditional taxonomies:** categorical diagnostic systems
 
 <p style="font-size:85%; text-align:left;">
-
 (e.g., DSM, ICD)
-
 </p>
 
 <div style="margin-top:1cm;"></div>
-**Recent models:** dimensional and transdiagnostic approaches, network of symptoms
+**Recent models:** dimensional and integrative approaches
 
 <p style="font-size:85%; text-align:left;">
-
-(e.g. Hierarchical Taxonomy of Psychopathology model by Kotov et al., 2017)
-
+(e.g. Kotov et al., 2017; Borsboom & Cramer, 2013)
 </p>
 
 # Research Question
@@ -110,7 +106,7 @@ How can we identify **latent factors**?
 $M_{kg} \in \mathbb{R}_{\ge 0}^{K \times G}$ is the full observed data matrix (test item x subject)
 </p>
 
-<div style="margin-top:1cm;"></div>
+<div style="margin-top:1.5cm;"></div>
 <p style="font-size:80%; text-align:left; line-height:1.2;">
 NMF decomposes $M$ into two lower-rank nonnegative matrices:
 </p>
@@ -121,32 +117,32 @@ NMF decomposes $M$ into two lower-rank nonnegative matrices:
 </center>
 
 <p style="font-size:80%; text-align:left; line-height:1.2;">
-
 $$
 M_{kg} = \sum_{n=1}^{N} P_{kn} E_{ng}
 $$
-
 </p>
 
 # First step
 
--   Dataset of ordinal data (e.g. on a Likert scale)
+- Dataset composed of **ordinal variables** (e.g., items measured on a Likert scale)
 
--   Estimate **latent factors** through **factor analysis** and **NMF**
+- Estimate **latent dimensions** using both **Factor Analysis** and **Non-negative Matrix Factorization (NMF)**
 
--   Compare the results using the correlation matrix of factor loadings
+- Compare the two methods by examining the **correlation matrix of factor loadings**
 
-## matrici item x fattori tramite EFA vs NMF
+## EFA vs NMF: ItemxFactor Loading Matrices
 
 ![](images/plot2-efa-nmf.png){fig-align="center"}
 
-## matrici item x fattori tramite CFA vs NMF
+## CFA vs NMF: ItemxFactor Loading Matrices
 
 ![](images/plot4-cfa-nmf.png){fig-align="center"}
 
-# Second step
+# Second Step
 
-how to make the NMF recognize that structure within a questionaire (item-> factor)... confirmatoryNMF?
+How can NMF capture the underlying structure of a questionnaire (items → factor)?  
+<br>
+confirmatory NMF?
 
 # Estensions
 
@@ -154,13 +150,19 @@ If the results are encouraging ...
 
 -   [Third step:]{style="color:#900000;"} use NMF to identify latent factors shared within the same spectrum of symptoms
 
--   [Fourth step:]{style="color:#900000;"} use causal NMF (Landy et al., 2025b) to study the effect of different treatments on the same spectrum of symptoms
+-   [Fourth step:]{style="color:#900000;"} use **causal NMF** (Landy et al., 2025b) to study the effect of different treatments on the same spectrum of symptoms
 
 # Materials
 
 All materials are available on GitHub at <a href="https://github.com/laurasitaunipd/nmf.git" target="_blank">laurasitaunipd/nmf</a>
 
 # Bibliography
+
+<div style="margin-top:1cm;"></div>
+<p style="font-size:70%; text-align:left; line-height:1.2;">
+Borsboom, D., & Cramer, A. O. (2013). Network analysis: an integrative approach to the structure of psychopathology. Annual review of clinical psychology, 9(1), 91-121.
+</p>
+
 
 <div style="margin-top:1cm;"></div>
 <p style="font-size:70%; text-align:left; line-height:1.2;">
@@ -200,7 +202,7 @@ risultato_fa <- factanal(item_data_complete,
 
 ##
 
-funzione pacchetto `bayesNMF`
+R package `bayesNMF`
 
 ```{r nmf}
 #| eval: false
@@ -220,7 +222,9 @@ P <- as.matrix(P)
 
 ##
 
-confronto EFA e NMF
+Comparison of Item-by-Factor matrices 
+
+obtained through EFA and NMF
 
 ```{r efa-nmf}
 #| eval: false
@@ -263,7 +267,9 @@ modificationIndices(fit, sort.=T)[1:10,]
 
 ##
 
-confronto CFA e NMF
+Comparison of Item-by-Factor matrices 
+
+obtained through CFA and NMF
 
 ```{r cfa-nmf}
 #| eval: false

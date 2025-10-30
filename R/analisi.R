@@ -161,7 +161,7 @@ modificationIndices(fit, sort.=T)[1:10,]
 
 ####
 
-model = "
+model_1 = "
 SMD =~ bessi_1 + bessi_6 + bessi_11 + bessi_16 + bessi_21 + bessi_26 + bessi_31 + bessi_36 + bessi_41 
 IND =~ bessi_5 + bessi_10 + bessi_15 + bessi_20 + bessi_25 + bessi_30 + bessi_35 + bessi_40 + bessi_45
 COD =~ bessi_3 + bessi_8 + bessi_13 + bessi_18 + bessi_23 + bessi_28 + bessi_33 + bessi_38 + bessi_43 
@@ -170,11 +170,11 @@ ESD =~ bessi_4 + bessi_9 + bessi_14 + bessi_19 + bessi_24 + bessi_29 + bessi_34 
 
 bessi_15 ~~ bessi_40 
 "
-fit = cfa(model=model_1, data=dati, ordered=T)
-summary(fit, standardized=T)
-fitMeasures(fit, fit.measures=c("rmsea","srmr","cfi","nnfi"))
+fit_1 = cfa(model=model_1, data=dati, ordered=T)
+summary(fit_1, standardized=T)
+fitMeasures(fit_1, fit.measures=c("rmsea","srmr","cfi","nnfi"))
 
-modificationIndices(fit, sort.=T)[1:10,]
+modificationIndices(fit_1, sort.=T)[1:10,]
 
 ####
 lambda_unstd = inspect(fit, what = "coef")$lambda
