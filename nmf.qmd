@@ -1,5 +1,5 @@
 ---
-title: "Causal Inference for Latent Factors<br> Underlying Psychopathology"
+title: "Non-negative Matrix Factorization<br> to identify Latent Factors<br> Underlying Psychopathology"
 authors: "Laura Sità"
 format:
   revealjs:
@@ -76,24 +76,34 @@ library(ggplot2)
 
 Classification of psychopathology
 
-<div style="margin-top:1.25cm;"></div>
-**Traditional taxonomies:** categorical diagnostic systems 
+::: {style="margin-top:1.25cm;"}
+:::
+
+**Traditional taxonomies:** categorical diagnostic systems
+
 <p style="font-size:85%; text-align:left;">
+
 (e.g., DSM, ICD)
+
 </p>
 
-<div style="margin-top:1cm;"></div>
-**Recent models:** dimensional and transdiagnostic approaches 
+::: {style="margin-top:1cm;"}
+:::
+
+**Recent models:** dimensional and transdiagnostic approaches
+
 <p style="font-size:85%; text-align:left;">
-(e.g. Hierarchical Taxonomy of Psychopathology model by Kotov et al., 2017) 
+
+(e.g. Hierarchical Taxonomy of Psychopathology model by Kotov et al., 2017)
+
 </p>
 
 # Research Question
 
 How can we uncover **latent factors** across disorders?
 
-- cfa o efa
-- Proposed approach (inspired by Landy et al., 2025): **Non-negative Matrix Factorization (NMF)**
+-   Factor Analysis
+-   Proposed approach (inspired by Landy et al., 2025): **Non-negative Matrix Factorization (NMF)**
 
 # Proposed approach
 
@@ -106,47 +116,62 @@ How can we uncover **latent factors** across disorders?
 ## NMF
 
 <p style="font-size:80%; text-align:left; line-height:1.2;">
-NMF factorizes the full observed data matrix  
+
+NMF factorizes the full observed data matrix
+
 </p>
 
 <center style="font-size:70%">
-$M_{kg} \in \mathbb{R}_{\ge 0}^{K \times G}$,  
-where each row $k$ represents an observed feature (e.g., test item)  
-and each column $g$ represents an individual.  
+
+$M_{kg} \in \mathbb{R}_{\ge 0}^{K \times G}$,\
+where each row $k$ represents an observed feature (e.g., test item)\
+and each column $g$ represents an individual.
+
 </center>
 
-<div style="margin-top:1cm;"></div>
+::: {style="margin-top:1cm;"}
+:::
+
 <p style="font-size:80%; text-align:left; line-height:1.2;">
+
 It decomposes $M$ into two lower-rank nonnegative matrices:
+
 </p>
 
 <center style="font-size:65%">
-$P \in \mathbb{R}_{\ge 0}^{K \times N}$ → loadings of observed variables on $N$ latent factors  
-<br>
-$E \in \mathbb{R}_{\ge 0}^{N \times G}$ → expression (or weights) of latent factors across individuals  
+
+$P \in \mathbb{R}_{\ge 0}^{K \times N}$ → loadings of observed variables on $N$ latent factors\
+<br> $E \in \mathbb{R}_{\ge 0}^{N \times G}$ → expression (or weights) of latent factors across individuals
+
 </center>
 
 <p style="font-size:80%; text-align:left; line-height:1.2;">
+
 $$
 M_{kg} = \sum_{n=1}^{N} P_{kn} E_{ng}
 $$
+
 </p>
 
 # First step
 
-- Use the NMF on a dataset of ordinal data (Likert scale)
+-   Use the NMF on a dataset of ordinal data (Likert scale)
 
-- Estimate **latent factors**
+-   Estimate **latent factors**
 
-- Compare them with those obtained through **CFA?**
+-   Compare them with those obtained through **factor analysis**
 
 ## codice
 
 mostra il codice sul dataset di tommaso
 
-## output
+## matrici item x fattori tramite EFA vs NMF
 
-mostra outout
+![](images/plot2-efa-nmf.png){fig-align="center"}
+
+## matrici item x fattori tramite CFA vs NMF
+
+![](images/plot4-cfa-nmf.png){fig-align="center"}
 
 # Second step
 
@@ -156,28 +181,41 @@ how to make the NMF recognize that items within the same questionnaire have a st
 
 If the results are encouraging ...
 
-- <span style="color:#900000;">Third step:</span> use NMF to find latent factors shared within the same spectrum of symptoms 
+-   [Third step:]{style="color:#900000;"} use NMF to find latent factors shared within the same spectrum of symptoms
 
-- <span style="color:#900000;">Fourth step:</span> use causal NMF to find latent factors across different treatment on the same spectrum of symptoms
+-   [Fourth step:]{style="color:#900000;"} use causal NMF to find latent factors across different treatment on the same spectrum of symptoms
 
-# Materials 
-All materials are available on GitHub in the `project` folder of the repository <a href="https://github.com/laurasitaunipd/handzone.git" target="_blank">laurasitaunipd/handzone</a>
+# Materials
+
+All materials are available on GitHub at <a href="https://github.com/laurasitaunipd/nmf.git" target="_blank">laurasitaunipd/nmf</a>
 
 # Bibliography
 
-<div style="margin-top:1cm;"></div>
+::: {style="margin-top:1cm;"}
+:::
+
 <p style="font-size:70%; text-align:left; line-height:1.2;">
+
 Kotov, R., Krueger, R. F., Watson, D., Achenbach, T. M., Althoff, R. R., Bagby, R. M., ... & Zimmerman, M. (2017). The Hierarchical Taxonomy of Psychopathology (HiTOP): A dimensional alternative to traditional nosologies. Journal of abnormal psychology, 126(4), 454.
+
 </p>
 
-<div style="margin-top:1cm;"></div>
+::: {style="margin-top:1cm;"}
+:::
+
 <p style="font-size:70%; text-align:left; line-height:1.2;">
+
 Landy, J. M., Basava, N., & Parmigiani, G. (2025). bayesNMF: Fast Bayesian Poisson NMF with Automatically Learned Rank Applied to Mutational Signatures. arXiv preprint arXiv:2502.18674.
+
 </p>
 
-<div style="margin-top:1cm;"></div>
+::: {style="margin-top:1cm;"}
+:::
+
 <p style="font-size:70%; text-align:left; line-height:1.2;">
+
 Landy, J. M., Zorzetto, D., De Vito, R., & Parmigiani, G. (2025). Causal Inference for Latent Outcomes Learned with Factor Models. arXiv preprint arXiv:2506.20549.
+
 </p>
 
 # Supplemental Materials

@@ -129,9 +129,9 @@ corrplot(
 
 plot(P[,3],efa_loadings[,5])
 
-efa_loadings_somma <- efa_loadings[,4]-efa_loadings[,5]-efa_loadings[,3]
-plot(P[,5],efa_loadings_somma)
-cor(P[,5],efa_loadings_somma)
+efa_loadings_diff <- efa_loadings[,4]-efa_loadings[,5]-efa_loadings[,3]
+plot(P[,5],efa_loadings_diff)
+cor(P[,5],efa_loadings_diff)
 
 ######################################################################## 
 
@@ -170,19 +170,20 @@ ESD =~ bessi_4 + bessi_9 + bessi_14 + bessi_19 + bessi_24 + bessi_29 + bessi_34 
 
 bessi_15 ~~ bessi_40 
 "
-fit = cfa(model=model, data=dati, ordered=T)
+fit = cfa(model=model_1, data=dati, ordered=T)
 summary(fit, standardized=T)
 fitMeasures(fit, fit.measures=c("rmsea","srmr","cfi","nnfi"))
 
 modificationIndices(fit, sort.=T)[1:10,]
 
-
+####
 lambda_unstd = inspect(fit, what = "coef")$lambda
 lambda_unstd
 
 lambda = inspect(fit, what = "std")$lambda
 lambda
 
+#### confronto fattori trovati tramite EFA e CFA
 quartz()
 allLoadings = cbind(efa_loadings[item_names,], lambda[item_names,])
 corrplot(
@@ -200,6 +201,7 @@ corrplot(
 
 # Riordina le righe di lambda in base al numero negli item bessi_1 ... bessi_45
 lambda <- lambda[order(as.numeric(gsub("bessi_", "", rownames(lambda)))), ]
+#lambda_unstd <- lambda_unstd[order(as.numeric(gsub("bessi_", "", rownames(lambda_unstd)))), ]
 
 allLoadings = cbind(P,lambda)
 
