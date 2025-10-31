@@ -257,7 +257,7 @@ COD =~ bessi_3 + bessi_8 + bessi_13 + bessi_18 + bessi_23 + bessi_28 + bessi_33 
 SED =~ bessi_2 + bessi_7 + bessi_12 + bessi_17 + bessi_22 + bessi_27 + bessi_32 + bessi_37 + bessi_42 
 ESD =~ bessi_4 + bessi_9 + bessi_14 + bessi_19 + bessi_24 + bessi_29 + bessi_34 + bessi_39 + bessi_44
 "
-fit = cfa(model=model, data=dati, ordered=T)
+fit = cfa(model=model, data=data, ordered=T)
 summary(fit, standardized=T)
 fitMeasures(fit, fit.measures=c("rmsea","srmr","cfi","nnfi"))
 
