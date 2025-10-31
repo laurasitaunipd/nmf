@@ -1,0 +1,37 @@
+---
+title: ""
+format: pdf
+editor: visual
+---
+
+\begin{center}
+\huge \textbf{Non-negative Matrix Factorization\\ to identify Latent Factors\\ Underlying Psychopathology}
+\end{center}
+\setlength{\parskip}{0pt}
+\begin{center}
+\large{last update 31/10/25}
+\end{center}
+\vspace{0.5cm}
+
+## First steps
+
+\begin{itemize}
+\item (1) Apply Non-negative Matrix Factorization (NMF) to data collected on a Likert scale, where items are expected to reflect a set of simple and interpretable latent factors (not necessarily independent). Then, compare the factors extracted through NMF with those obtained via \textbf{Factor Analysis} (including exploratory approaches).  
+\newline Conduct a literature review to assess whether NMF has previously been applied to psychological data.
+
+\item (2) Make NMF recognize the grouping structure of items within a questionnaire (e.g., items belonging to the same factor). Possible direction: \textbf{confirmatory NMF}?
+\end{itemize}
+
+## Extensions
+
+*Work in progress.* The goal is to contribute to overcoming the traditional view of mental disorders as discrete categories and to promote an approach that focuses on networks of symptoms. From this perspective, interventions should target symptoms rather than diagnostic labels, thus moving beyond the theoretical problem of defining disorders themselves.
+
+\begin{itemize}
+\item (3) \textbf{Multi-study} use NMF to identify the shared latent vulnerabilities among individuals who exhibit a similar network of symptoms.  
+For example, select participants falling within the same spectrum (e.g., internalizingi) and examine which latent factors they have in common, thereby going beyond diagnostic categories.
+
+\item (4) Apply \textbf{causal NMF} within a causal framework to uncover common latent factors underlying the effects of different interventions applied to individuals within the same spectrum (i.e., sharing similar symptom networks).
+\end{itemize}
+
+**Remaining limitation:** the questionnaires typically used to assess symptoms (and that provide our Likert-scale data) may not accurately or adequately measure those symptoms.\
+**Possible damage-control strategy:** focus on questionnaires (or even subsections of them) that the literature identifies as providing reliable and valid measurement of the target constructs.
