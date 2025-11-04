@@ -76,7 +76,7 @@ efa_loadings <- as.matrix(risultato_fa$loadings[, 1:5]) # MATRIX item x factor
 
 # loadings nmf (P)
 nmf_loadings <- round(P, 2) # MATRIX item x factor
-rownames(nmf_loadings) <- paste0("bessi_", 1:nrow(nmf_loadings))
+rownames(nmf_loadings) <- paste0("item_", 1:nrow(nmf_loadings))
 colnames(nmf_loadings) <- paste0("Fattore_", 1:ncol(nmf_loadings))
 
 ######################################################################## 
