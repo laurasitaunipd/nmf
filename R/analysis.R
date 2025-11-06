@@ -2,6 +2,7 @@ library(readxl)
 library(bayesNMF)
 library(corrplot)
 library(lavaan)
+library(ragg)
 setwd("/Users/laura/Desktop/post/2 nmf/R")
 
 ######################################################################## 
@@ -107,7 +108,7 @@ efa_loadings = risultato_fa$loadings
 
 allLoadings = cbind(P,efa_loadings)
 
-quartz()
+agg_png("images/nmf-efa.png", width = 1400, height = 900, res = 150)
 corrplot(
   cor(allLoadings),
   method = "color",   # fill cells with colors
@@ -116,6 +117,7 @@ corrplot(
   number.cex = 0.7,        # text size for numbers
   tl.cex = 0.8             # text size for labels
 )
+dev.off()
 
 ########################################################################
 
@@ -194,7 +196,7 @@ lambda <- lambda[order(as.numeric(gsub("bessi_", "", rownames(lambda)))), ]
 
 allLoadings = cbind(P,lambda)
 
-quartz()
+agg_png("images/nmf-cfa.png", width = 1400, height = 900, res = 150)
 corrplot(
   cor(allLoadings),
   method = "color",   # fill cells with colors
@@ -203,100 +205,20 @@ corrplot(
   number.cex = 0.7,        # text size for numbers
   tl.cex = 0.8             # text size for labels
 )
-
-######################################################################## 
-# 2 ITEM (WORK IN PROGRESS)
-
-# EFA
-item_data_2 <- data[, c("bessi_13", "bessi_25", "bessi_30")]
-#item_data_2 <- data[, c("bessi_15", "bessi_25", "bessi_30", "bessi_40")]
-
-item_data_2 <- data.frame(lapply(item_data_2, as.numeric))
-item_data_complete_2 <- na.omit(item_data_2)
-str(item_data_complete_2)
-
-risultato_fa <- factanal(item_data_complete_2, factors = 1, rotation = "promax", scores = "regression")
-print(risultato_fa, digits = 2, cutoff = 0.3)
-risultato_fa$loadings
-
-# NMF
-if (!dir.exists("output_2")) dir.create("output_2")
-
-file_result <- "output_2/result_bayesNMF_2.rds"
-
-if (file.exists(file_result_2)) {
-  message("✓ Loading saved result from file...")
-  result <- readRDS(file_result_2)
-} else {
-  message("Running bayesNMF()")
-  
-  M_t_2 <- t(as.matrix(item_data_complete_2))
-  dim(M_t_2)
-  
-  result <- bayesNMF(
-    data = M_t_2,
-    likelihood = "normal",
-    prior = "truncnormal",
-    rank = 1
-  )
-  
-  saveRDS(result_2, file_result_2)
-  message("Result saved in: ", file_result_2)
-}
-
-
-# estraggo la stima MAP
-MAP_2 <- result_2$get_MAP()
-
-######################################################################## 
-
-P2 <- MAP_2$P
-E2 <- MAP_2$E
-
-# average value between lower and upper bound
-if (is.list(P2)) {
-  if (all(c("lower", "upper") %in% names(P2))) {
-    P2 <- (P2$lower + P2$upper) / 2
-  } else {
-    P2 <- as.matrix(P2[[1]])
-  }
-}
-
-if (is.list(E2)) {
-  if (all(c("lower", "upper") %in% names(E2))) {
-    E2 <- (E2$lower + E2$upper) / 2
-  } else {
-    E2 <- as.matrix(E2[[1]])
-  }
-}
-
-P2 <- as.matrix(P2)
-E2 <- as.matrix(E2)
+dev.off()
 
 ########################################################################
-# EFA E BAYESIAN NMF (1 factor, 3 item)
 
-# loadings EFA
-efa_loadings <- as.matrix(risultato_fa$loadings[, 1, drop = FALSE])  # matrice item × 1
-colnames(efa_loadings) <- "efa_loading_1"
+allLoadings3 = cbind(P,efa_loadings,lambda)
 
-# loadings NMF (P2)
-nmf_loadings <- round(P2, 2)  # matrice item × 1
-rownames(nmf_loadings) <- paste0("bessi_", 1:nrow(nmf_loadings))
-colnames(nmf_loadings) <- "nmf_loading_1"
-
-allLoadings <- cbind(nmf_loadings, efa_loadings)
-
-print(allLoadings)
-
-quartz()
-
+agg_png("images/nmf-efa-cfa.png", width = 1400, height = 900, res = 150)
 corrplot(
-  cor(allLoadings, use = "pairwise.complete.obs"),
-  method = "color",       # riempie le celle con colori
-  type = "full",          # mostra tutta la matrice
-  addCoef.col = "black",  # mostra i coefficienti
-  number.cex = 0.9,       # grandezza dei numeri
-  tl.cex = 1,             # grandezza delle etichette
-  mar = c(0, 0, 1, 0)
+  cor(allLoadings3),
+  method = "color",   # fill cells with colors
+  type = "full",      # show full matrix
+  addCoef.col = "black",   # show correlation coefficients
+  number.cex = 0.7,        # text size for numbers
+  tl.cex = 0.8             # text size for labels
 )
+dev.off()
+

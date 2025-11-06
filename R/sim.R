@@ -1,190 +1,149 @@
-library(bayesNMF)
-library(corrplot)
 library(lavaan)
+library(MASS)
+library(bayesNMF)
+library(ragg)
+library(RColorBrewer)
+library(corrplot)
 library(psych)
-library(GPArotation)
 setwd("/Users/laura/Desktop/post/2 nmf/R")
 
-# 45 item (punteggio da 1 a 5) # 100 soggetti # 5 fattori 
+# solo valori positivi con approssimazione alla normale
+# in modo plausibile a livello biologico/psicologico
 
-######################################################################## 
-# SOLUZIONE DELLA SIMULAZIONE: MATRICE VERA
-######################################################################## 
-set.seed(123)
+N = 1000
+r = .20
+x = mvrnorm(N, mu=c(-1,-1), Sigma=matrix(c(1,r,
+                                         r,1),2,2))
 
-# ---------------------------
-# 1) Matrice di loadings 45x5
-# ---------------------------
-n_items <- 45; n_factors <- 5; n <- 100
-item_names <- paste0("item_", 1:n_items)
-factor_names <- paste0("factor_", 1:n_factors)
+Depressione = rbinom(N,50,plogis(x[,1]))
+Ansia = rbinom(N,50,plogis(x[,2]))
+cor(Depressione,Ansia)
 
-loadings <- matrix(0, nrow = n_items, ncol = n_factors)
-for (f in 1:n_factors) {
-  idx <- ((f-1)*9 + 1):(f*9)
-  loadings[idx, f] <- pmax(0, rnorm(9, 0.70, 0.05))
-  loadings[idx, setdiff(1:n_factors, f)] <- pmax(0, rnorm(9*4, 0.20, 0.05))
-}
-loadings[loadings > 1] <- 1
-rownames(loadings) <- item_names
-colnames(loadings) <- factor_names
+Depr_1 = 1.2*Depressione+rbinom(N,50,.7)
+Depr_2 = 0.5*Depressione+rbinom(N,80,.5)
+Depr_3 = 0.8*Depressione+rbinom(N,40,.5)
+Depr_4 = 1.5*Depressione+rbinom(N,30,.3)
+Depr_5 = 1.0*Depressione+rbinom(N,100,.1)
 
-# ------------------------------------
-# 2) Genera punteggi latenti e rumore
-# ------------------------------------
-# fattori ~ N(0,1) indipendenti (puoi introdurre correlazioni se vuoi)
-S <- matrix(rnorm(n * n_factors), nrow = n, ncol = n_factors)
-colnames(S) <- factor_names
-# rumore specifico dell’item
-epsilon <- matrix(rnorm(n * n_items, sd = 0.30), nrow = n, ncol = n_items)
+Anx_1 = 1.2*Ansia+rbinom(N,50,.7)
+Anx_2 = 0.5*Ansia+rbinom(N,80,.5)
+Anx_3 = 0.8*Ansia+rbinom(N,40,.5)
+Anx_4 = 1.5*Ansia+rbinom(N,30,.3)
+Anx_5 = 1.0*Ansia+rbinom(N,100,.1)
 
-# ----------------------------------------
-# 3) Dati continui dal modello: X = S %*% L'
-# ----------------------------------------
-X_cont <- S %*% t(loadings) + epsilon      # n x p
-colnames(X_cont) <- item_names
-rownames(X_cont) <- paste0("subj_", 1:n)
-
-# ------------------------------------
-# 4) Discretizza in Likert 1–5 per item
-# ------------------------------------
-datasim <- sapply(1:n_items, function(j){
-  br <- quantile(X_cont[, j], probs = seq(0, 1, length.out = 6), na.rm = TRUE)
-  as.integer(cut(X_cont[, j], breaks = br, include.lowest = TRUE, labels = 1:5))
-})
-datasim <- as.matrix(datasim)
-colnames(datasim) <- item_names
-rownames(datasim) <- paste0("subj_", 1:n)
-
-# ===============================
-# 1) Calcola la matrice policorica
-# ===============================
-rho_poly <- polychoric(datasim)$rho   # matrice 45x45 di correlazioni policoriche
-
-# Controllo base (dimensioni e struttura)
-dim(rho_poly)
-round(rho_poly[1:5, 1:5], 2)  # prime 5x5 per vedere l'andamento
-
-# ===============================
-# 2) EFA con 5 fattori
-# ===============================
-efa <- fa(
-  r = rho_poly,       # matrice di correlazioni policoriche
-  nfactors = 5,       # numero di fattori latenti
-  fm = "minres",      # metodo di estrazione (robusto)
-  rotate = "oblimin"  # rotazione obliqua (fattori correlati)
+df = data.frame(
+  ID = 1:N,
+  Depr_1, Depr_2, Depr_3, Depr_4, Depr_5,
+  Anx_1, Anx_2, Anx_3, Anx_4, Anx_5
 )
 
-# ===============================
-# 3) Risultati principali
-# ===============================
 
-# Matrice dei loadings ruotati
-print(efa$loadings, cutoff = 0.3)
-
-# Varianza spiegata cumulativa 
-efa$Vaccounted # 76%
-# Correlazioni tra fattori (perché rotazione obliqua)
-efa$r.scores
-
-# loadings EFA
-efa_loadingssim <- as.matrix(efa$loadings[, 1:5]) # MATRIX item x factor
-efa_loadingssim <- round(efa_loadingssim, 2)
-colnames(efa_loadingssim) = paste0("factor_",1:5)
+model = "
+depr_latent =~ Depr_1+Depr_2+Depr_3+Depr_4+Depr_5
+anx_latent =~ Anx_1+Anx_2+Anx_3+Anx_4+Anx_5
+"
+fit = cfa(model, df, std.lv=T)
+summary(fit,standardized=T)
+# pred_depress = as.numeric( predict(fit) )
+# plot(pred_depress, Depressione)
+# cor(pred_depress, Depressione)
 
 ######################################################################## 
-# NMF su datasim: P matrice di output su DATASIM (sub x item)
-######################################################################## 
-########################################################################
-# BAYESIAN NMF SUI DATI SIMULATI (datasim)
-########################################################################
-if (!dir.exists("output")) dir.create("output")
-file_result_sim <- "output/NMF_sim.rds"
+# efa 
+efa <- fa(df[, 2:ncol(df)],
+          nfactors = 2,
+          fm       = "minres",
+          rotate   = "varimax",
+          scores   = "regression")
+quartz(); biplot.psych(efa, choose = c(1, 2))
+
+# ======================================
+# NMF (Bayesian NMF)
+# ======================================
+
+if (!dir.exists("output_sim")) dir.create("output_sim")
+
+file_result_sim <- "output_sim/result_bayesNMF_sim.rds"
 
 if (file.exists(file_result_sim)) {
-  message("✓ Carico il risultato salvato da file...")
-  nmf_sim <- readRDS(file_result_sim)
+  message("✓ Loading saved result from file...")
+  result_sim <- readRDS(file_result_sim)   
 } else {
-  message("Eseguo bayesNMF()")
+  message("Running bayesNMF()")
   
-  # Trasponi la matrice: NMF vuole item (righe) × soggetti (colonne)
-  M_t <- t(as.matrix(datasim))
-  dim(M_t)  # 45 x 100
+  # La prima colonna è l'ID, quindi prendo solo le colonne 2: fine
+  M_t_2 <- t(as.matrix(df[, -1]))  
+  dim(M_t_2)
   
-  # Esegui il modello
-  nmf_sim <- bayesNMF(
-    data = M_t,
+  result_sim <- bayesNMF(
+    data = M_t_2,
     likelihood = "normal",
     prior = "truncnormal",
-    rank = 5
+    rank = 2
   )
   
-  # Salva il risultato
-  saveRDS(nmf_sim, file_result_sim)
-  message("✓ Risultato salvato in: ", file_result_sim)
+  saveRDS(result_sim, file_result_sim)  
+  message("Result saved in: ", file_result_sim)
 }
 
-MAP <- nmf_sim$get_MAP()
-P <- MAP$P
-E <- MAP$E
+MAPsim <- result_sim$get_MAP()  
 
-# Funzione di utilità: porta qualsiasi output di P/E a matrice numerica
-to_numeric_matrix <- function(M) {
-  # Se è una lista con intervalli, prendo la media (midpoint)
-  if (is.list(M) && all(c("lower","upper") %in% names(M))) {
-    M <- (M$lower + M$upper) / 2
-  } else if (is.list(M)) {
-    M <- as.matrix(M[[1]])
+Psim <- MAPsim$P
+Esim <- MAPsim$E
+
+# Calcolo media tra lower e upper se presenti
+if (is.list(Psim)) {
+  if (all(c("lower", "upper") %in% names(Psim))) {
+    Psim <- (Psim$lower + Psim$upper) / 2
+  } else {
+    Psim <- as.matrix(Psim[[1]])
   }
-  # Assicuro il tipo matrice
-  if (!is.matrix(M)) M <- as.matrix(M)
-  # Forzo modalità numerica
-  storage.mode(M) <- "numeric"
-  # Se per qualche motivo è ancora non-numerica, vectorizzo e ricostruisco
-  if (!is.numeric(M)) {
-    M <- matrix(as.numeric(M), nrow = nrow(M), dimnames = dimnames(M))
-  }
-  M
 }
 
-# Applico ai tuoi oggetti
-Psim <- to_numeric_matrix(P)
-Esim <- to_numeric_matrix(E)
+if (is.list(Esim)) {
+  if (all(c("lower", "upper") %in% names(Esim))) {
+    Esim <- (Esim$lower + Esim$upper) / 2
+  } else {
+    Esim <- as.matrix(Esim[[1]])
+  }
+}
 
-# loadings nmf (P)
-Psim <- round(Psim, 2) # MATRIX item x factor
-rownames(Psim) <- paste0("item_", 1:nrow(Psim))
-colnames(Psim) <- paste0("fattore_", 1:ncol(Psim))
+Psim <- as.matrix(Psim)
+Esim <- as.matrix(Esim)
 
-# Normalizzazione colonne di P (somma=1), con denominatore sicuro
-den <- colSums(Psim)
-den[den == 0 | !is.finite(den)] <- 1
-Psim_norm <- sweep(Psim, 2, den, "/") # paragonabili alle loadings dell’EFA (che sono standardizzate).
+# CONFRONTO: corplot efa cfa nmf
+# loadings EFA
+efa_loadingsSIMSIMSIMSIM <- as.matrix(efa$loadings[, 1:2]) # MATRIX item x factor
+colnames(efa_loadingsSIMSIMSIMSIM) <- paste0("efa_factor", 1:ncol(efa_loadingsSIMSIMSIMSIM))
 
-######################################################################## 
-# heatmap # vedi file a parte heatmap.R
-######################################################################## 
+# loadings NMF (P2)
+nmf_loadingsSIM <- round(Psim, 2)  # matrice item × 1
+rownames(nmf_loadingsSIM) <- paste0("item_", 1:nrow(nmf_loadingsSIM))
+colnames(nmf_loadingsSIM) <- paste0("nmf_factor", 1:ncol(nmf_loadingsSIM))
 
-######################################################################## 
-# matrice di correlazione tra le matrici P ed EFA
-######################################################################## 
+allLoadings <- cbind(nmf_loadingsSIM, efa_loadingsSIMSIMSIMSIM)
 
-allLoadings = cbind(Psim_norm,efa_loadingssim)
+print(allLoadings)
 
-# apri una finestra grafica quartz (macOS nativa)
-quartz(width = 10, height = 10)
+# CONFRONTO: corplot efa, cfa, nmf
+# loadings CFA
+cfa_loadingsSIM <- lavaan::inspect(fit, "std")$lambda
+round(cfa_loadingsSIM, 2)
+rownames(cfa_loadingsSIM) <- names(df)[-1]
+colnames(cfa_loadingsSIM) <- paste0("cfa_factor", 1:ncol(cfa_loadingsSIM))
 
-# crea il grafico
-corrplot(
-  cor(allLoadings),
-  method = "color",      # celle colorate
-  type = "full",         # matrice completa
-  addCoef.col = "black", # mostra i valori di correlazione
-  number.cex = 0.7,      # grandezza numeri
-  tl.cex = 0.8           # grandezza etichette
-)
+allLoadings2 <- cbind(nmf_loadingsSIM, efa_loadingsSIMSIMSIMSIM, cfa_loadingsSIM)
 
-# salva automaticamente in PNG nella cartella images
-dev.copy(png, filename = "images/corrplot_sim.png", width = 1200, height = 1200, res = 150)
-dev.off()  # chiude il PNG
-dev.off()  # chiude la finestra quartz
+print(allLoadings2)
+
+# corrplot
+agg_png("images/SIMnmf-efa-cfa.png", width = 1400, height = 900, res = 150)
+par(mfrow = c(1, 2))
+corrplot(cor(allLoadings, use = "pairwise.complete.obs"),
+         method="color", type="full", addCoef.col="black",
+         number.cex=0.9, tl.cex=1, mar=c(0,0,1,0), title="nmf vs efa")
+corrplot(cor(allLoadings2, use = "pairwise.complete.obs"),
+         method="color", type="full", addCoef.col="black",
+         number.cex=0.9, tl.cex=1, mar=c(0,0,1,0), title="nmf vs efa vs cfa")
+dev.off()
+
