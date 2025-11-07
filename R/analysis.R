@@ -82,7 +82,7 @@ rownames(efa_loadings) <- paste0("item_", 1:nrow(efa_loadings))
 colnames(efa_loadings) <- paste0("EFA-factor", 1:ncol(efa_loadings))
 
 # loadings nmf (P)
-nmf_loadings <- round(P, 2) # MATRIX item x factor
+nmf_loadings <- P # MATRIX item x factor
 rownames(nmf_loadings) <- paste0("item_", 1:nrow(nmf_loadings))
 colnames(nmf_loadings) <- paste0("NMF-factor", 1:ncol(nmf_loadings))
 
