@@ -3,6 +3,10 @@ library(bayesNMF)
 library(corrplot)
 library(lavaan)
 library(ragg)
+library(pheatmap)
+library(gridExtra)
+library(grid)
+library(RColorBrewer)
 setwd("/Users/laura/Desktop/post/2 nmf/R")
 
 ######################################################################## 
@@ -74,11 +78,13 @@ E <- as.matrix(E)
 ######################################################################## EFA VS NMF
 # loadings EFA
 efa_loadings <- as.matrix(risultato_fa$loadings[, 1:5]) # MATRIX item x factor
+rownames(efa_loadings) <- paste0("item_", 1:nrow(efa_loadings))
+colnames(efa_loadings) <- paste0("EFA-factor", 1:ncol(efa_loadings))
 
 # loadings nmf (P)
 nmf_loadings <- round(P, 2) # MATRIX item x factor
 rownames(nmf_loadings) <- paste0("item_", 1:nrow(nmf_loadings))
-colnames(nmf_loadings) <- paste0("Fattore_", 1:ncol(nmf_loadings))
+colnames(nmf_loadings) <- paste0("NMF-factor", 1:ncol(nmf_loadings))
 
 ######################################################################## 
 
@@ -101,12 +107,9 @@ corrplot(
   tl.cex = 0.8             # text size for labels
 )
 
-# correspondences FACTOIR LOADINGS !
+# correspondences FACTOR LOADINGS !
 
-colnames(P) = paste0("nmf_loadings_",1:5)
-efa_loadings = risultato_fa$loadings
-
-allLoadings = cbind(P,efa_loadings)
+allLoadings = cbind(nmf_loadings,efa_loadings)
 
 agg_png("images/nmf-efa.png", width = 1400, height = 900, res = 150)
 corrplot(
@@ -155,44 +158,17 @@ modificationIndices(fit, sort.=T)[1:10,]
 
 ####
 
-model_1 = "
-SMD =~ bessi_1 + bessi_6 + bessi_11 + bessi_16 + bessi_21 + bessi_26 + bessi_31 + bessi_36 + bessi_41 
-IND =~ bessi_5 + bessi_10 + bessi_15 + bessi_20 + bessi_25 + bessi_30 + bessi_35 + bessi_40 + bessi_45
-COD =~ bessi_3 + bessi_8 + bessi_13 + bessi_18 + bessi_23 + bessi_28 + bessi_33 + bessi_38 + bessi_43 
-SED =~ bessi_2 + bessi_7 + bessi_12 + bessi_17 + bessi_22 + bessi_27 + bessi_32 + bessi_37 + bessi_42 
-ESD =~ bessi_4 + bessi_9 + bessi_14 + bessi_19 + bessi_24 + bessi_29 + bessi_34 + bessi_39 + bessi_44
-
-bessi_15 ~~ bessi_40 
-"
-fit_1 = cfa(model=model_1, data=data, ordered=T)
-summary(fit_1, standardized=T)
-fitMeasures(fit_1, fit.measures=c("rmsea","srmr","cfi","nnfi"))
-
-modificationIndices(fit_1, sort.=T)[1:10,]
-
-####
 lambda_unstd = inspect(fit, what = "coef")$lambda
 lambda_unstd
 
 lambda = inspect(fit, what = "std")$lambda
 lambda
 
-#### EFA vs CFA
-quartz()
-allLoadings = cbind(efa_loadings[item_names,], lambda[item_names,])
-corrplot(
-  cor(allLoadings),
-  method = "color",   # fill cells with colors
-  type = "full",      # show full matrix
-  addCoef.col = "black",   # show correlation coefficients
-  number.cex = 0.7,        # text size for numbers
-  tl.cex = 0.8             # text size for labels
-)
-
 ######################################################################## 
 # CFA vs NMF
 # correspondences factor CFA loadings
-lambda <- lambda[order(as.numeric(gsub("bessi_", "", rownames(lambda)))), ]
+rownames(lambda) <- paste0("item_", 1:nrow(lambda))
+lambda <- lambda[order(as.numeric(gsub("item_", "", rownames(lambda)))), ]
 
 allLoadings = cbind(P,lambda)
 
@@ -209,7 +185,7 @@ dev.off()
 
 ########################################################################
 
-allLoadings3 = cbind(P,efa_loadings,lambda)
+allLoadings3 = cbind(nmf_loadings,efa_loadings,lambda)
 
 agg_png("images/nmf-efa-cfa.png", width = 1400, height = 900, res = 150)
 corrplot(
@@ -220,5 +196,51 @@ corrplot(
   number.cex = 0.7,        # text size for numbers
   tl.cex = 0.8             # text size for labels
 )
+dev.off()
+
+######################################################################## 
+# HEATMAP COMPARISON: EFA vs bayesNMF
+
+pal <- colorRampPalette(c("navy", "white", "firebrick3"))(200)
+
+# normalize nmf_loadings and sort by leading factor
+nmf_norm <- sweep(nmf_loadings, 2, apply(nmf_loadings, 2, max, na.rm = TRUE), "/")
+main_factor_nmf <- apply(nmf_norm, 1, which.max)
+order_items_nmf <- order(main_factor_nmf, -apply(nmf_norm, 1, max))
+NMF_plot <- nmf_norm[order_items_nmf, , drop = FALSE]
+
+# normalize efa_loadings and sort by leading factor
+efa_norm <- sweep(efa_loadings, 2, apply(efa_loadings, 2, max, na.rm = TRUE), "/")
+main_factor_efa <- apply(efa_norm, 1, which.max)
+order_items_efa <- order(main_factor_efa, -apply(efa_norm, 1, max))
+EFA_plot <- efa_norm[order_items_efa, , drop = FALSE]
+
+# normalize efa_loadings and sort by leading factor
+lambda_norm <- sweep(lambda, 2, apply(lambda, 2, max, na.rm = TRUE), "/")
+main_factor_cfa <- apply(lambda_norm, 1, which.max)
+order_items_cfa <- order(main_factor_cfa, -apply(lambda_norm, 1, max))
+CFA_plot <- lambda_norm[order_items_cfa, , drop = FALSE]
+
+p1 <- pheatmap( NMF_plot, color = pal, cluster_rows = FALSE, cluster_cols = FALSE, scale = "none", border_color = "black", legend = TRUE, fontsize_row = 7, fontsize_col = 10, cellwidth = 20, cellheight = 6, main = "NMF loadings", angle_col = 45, show_rownames = TRUE, show_colnames = TRUE, labels_row = rownames(NMF_plot), labels_col = colnames(NMF_plot), treeheight_row = 0, treeheight_col = 0 )
+p2 <- pheatmap( EFA_plot, color = pal, cluster_rows = FALSE, cluster_cols = FALSE, scale = "none", border_color = "black", legend = TRUE, fontsize_row = 7, fontsize_col = 10, cellwidth = 20, cellheight = 6, main = "EFA loadings", angle_col = 45, show_rownames = TRUE, show_colnames = TRUE, labels_row = rownames(EFA_plot), labels_col = colnames(EFA_plot), treeheight_row = 0, treeheight_col = 0 )
+p3 <- pheatmap(
+  CFA_plot,
+  color = pal,
+  cluster_rows = FALSE, cluster_cols = FALSE,
+  scale = "none", border_color = "black",
+  legend = TRUE, fontsize_row = 7, fontsize_col = 10,
+  cellwidth = 20, cellheight = 6,
+  main = "CFA loadings", angle_col = 45,
+  show_rownames = TRUE, show_colnames = TRUE,
+  labels_row = rownames(CFA_plot), labels_col = colnames(CFA_plot),
+  treeheight_row = 0, treeheight_col = 0
+)
+
+agg_png("images/HEATMAPnmf-efa.png", width = 1400, height = 900, res = 150)
+grid.arrange(p1[[4]], p2[[4]], ncol = 2)
+dev.off()
+
+agg_png("images/HEATMAPnmf-efa-cfa.png", width = 2000, height = 900, res = 150)
+grid.arrange(p1[[4]], p2[[4]], p3[[4]], ncol = 3)
 dev.off()
 
