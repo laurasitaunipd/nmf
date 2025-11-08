@@ -87,25 +87,13 @@ rownames(nmf_loadings) <- paste0("item_", 1:nrow(nmf_loadings))
 colnames(nmf_loadings) <- paste0("NMF-factor", 1:ncol(nmf_loadings))
 
 ######################################################################## 
-
 # correspondences factor scores individuals
-
 tE = t(E)
-colnames(tE) = paste0("nmf_scores_",1:5)
-efa_scores = risultato_fa$scores
+colnames(tE) = paste0("nmf-FACTORscores",1:5)
+nmf_scores = tE # MATRIX unit x factor
 
-allScores = cbind(tE,efa_scores)
-round(cor(allScores),3)
-
-quartz()
-corrplot(
-  cor(allScores),
-  method = "color",   # fill cells with colors
-  type = "full",      # show full matrix
-  addCoef.col = "black",   # show correlation coefficients
-  number.cex = 0.7,        # text size for numbers
-  tl.cex = 0.8             # text size for labels
-)
+efa_scores = risultato_fa$scores # MATRIX unit x factor
+colnames(efa_scores) = paste0("efa-FACTORscores",1:5)
 
 # correspondences FACTOR LOADINGS !
 
@@ -163,6 +151,12 @@ lambda_unstd
 
 lambda = inspect(fit, what = "std")$lambda
 lambda
+
+corrplot(cor(efa_loadings,lambda))
+
+###
+
+cfa_scores = predict(fit) # MATRIX unit x factor
 
 ######################################################################## 
 # CFA vs NMF
@@ -244,3 +238,18 @@ agg_png("images/HEATMAPnmf-efa-cfa.png", width = 2000, height = 900, res = 150)
 grid.arrange(p1[[4]], p2[[4]], p3[[4]], ncol = 3)
 dev.off()
 
+######################################################################## 
+# FACTOR SCORES comparison
+
+allScores = cbind(efa_scores,nmf_scores,cfa_scores)
+
+agg_png("images/SCORESnmf-efa-cfa.png", width = 1400, height = 900, res = 150)
+corrplot(
+  cor(allScores),
+  method = "color",   # fill cells with colors
+  type = "full",      # show full matrix
+  addCoef.col = "black",   # show correlation coefficients
+  number.cex = 0.7,        # text size for numbers
+  tl.cex = 0.8             # text size for labels
+)
+dev.off()

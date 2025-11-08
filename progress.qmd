@@ -1,0 +1,111 @@
+---
+title: ""
+format: pdf
+editor: visual
+---
+
+\begin{center}
+\huge \textbf{Work in progress}
+\end{center}
+\setlength{\parskip}{0pt}
+\begin{center}
+\large{last update 08/11/25}
+\end{center}
+\vspace{0.5cm}
+
+# Real dataset
+
+### Correlation matrix (ITEM X FACTOR)
+
+By definition, the factors identified through the CFA correspond to the dimensions measured by the [BESSI questionnaire](https://www.colby.edu/academics/departments-and-programs/psychology/research-opportunities/personality-lab/the-bessi/); therefore, each factor is labeled according to its respective construct name.
+
+![images/nmf-efa-cfa](images/nmf-efa-cfa.png){fig-align="center"}
+
+We can observe that:
+
+\begin{itemize}
+\item NMF and EFA are well aligned: several factors extracted by NMF show strong correlations with two of the EFA factors.
+\item \textcolor{red}{CFA does not correlate well with NMF and with EFA.}
+\end{itemize}
+
+### Correlation matrix (UNIT X FACTOR)
+
+Here we examine the correlations between the factor scores obtained from the three methods, to see whether a subject’s profile derived from one technique resembles that produced by the others.
+
+![images/SCORESnmf-efa-cfa](images/SCORESnmf-efa-cfa.png){fig-align="center"}
+
+We can observe that:
+
+\begin{itemize}
+\item CFA factors show strong correlations with each other, a pattern that is quite common in psychological data.
+\item EFA and CFA are reasonably aligned (except for the IND factor): we can clearly see pairs of latent factors that correlate strongly.
+\item EFA and NMF show a similar behavior to what we observed in the previous matrix. Two scenarios emerge: either one NMF factor correlates strongly with one EFA factor (e.g., NMF–Factor 1), or it correlates with two EFA factors but in opposite directions (e.g., NMF–Factor 2). Interestingly, this pattern mirrors what we saw in the correlation matrix of factor scores versus factor loadings, the same factors are involved in both cases.
+\end{itemize}
+
+```{r prove}
+#| eval: false
+#| echo: true
+# to test further rotations of the factors (below the ones tried together)
+source("R/analysis.R")
+plot(P[,3],efa_loadings[,5])
+
+efa_loadings_diff <- efa_loadings[,4]-efa_loadings[,5]-efa_loadings[,3]
+plot(P[,5],efa_loadings_diff)
+cor(P[,5],efa_loadings_diff)
+```
+
+### Heatmap
+
+In the paper by [Kim et al., 2025](https://www.nature.com/articles/s41598-025-94338-x), both NMF and EFA are applied for different purposes, without, however, providing an in-depth discussion of the methodological rationale (how the two techniques differ and where they overlap). Nonetheless, the two approaches are used in a complementary way:
+
+\begin{itemize}
+\item EFA used disease \textbf{prevalence} data for \textbf{identifying patterns};
+\item NMF used disease \textbf{incidence} data for \textbf{uncovering longitudinal patterns}.
+\end{itemize}
+
+In the paper, the heatmap is employed to visualize patterns of comorbidity (different diseases that fall within the same cluster).\
+Below we reproduce a similar heatmap for our dataset.
+
+![images/HEATMAPnmf-efa-cfa](images/HEATMAPnmf-efa-cfa.png){fig-align="center"}
+
+It is evident that:
+
+\begin{itemize}
+\item in the CFA, the loadings are fixed to zero by design (as specified in the model definition)
+\item the data come from a questionnaire with well-defined dimensions, which the EFA successfully identifies
+\item NMF also distinguishes the dimensions (similar to EFA, it identifies roughly 6–7 key items per dimension), though in a less sharply defined manner
+\end{itemize}
+
+# Simulated data
+
+The data-generating process follows the paradigmatic case for a confirmatory analysis, where a set of items is specifically designed to measure certain latent dimensions.
+
+We simulated 1000 statistical units responding to a questionnaire consisting of 10 items: five assessing depression and five assessing anxiety (the two underlying latent constructs).
+
+The data were simulated from binomial distributions to ensure positive values and to remain consistent with how such psychological phenomena are typically conceptualized.
+
+### Correlation matrix (ITEM X FACTOR)
+
+![images/SIMnmf-efa-cfa](images/SIMnmf-efa-cfa.png)
+
+We know examine how the factors correlate \textit{within} each technique:
+
+\begin{itemize}
+\item in the CFA, each factor correlates perfectly (1) with itself and shows a high correlation in the opposite direction with the other factor.
+\item The same pattern is observed in the EFA.
+\item \textcolor{red}{In the NMF, each factor correlates perfectly (1) with itself and shows a correlation of -0.27 with the other factor, which interestingly resembles the 0.2 value set in the simulation.}
+\end{itemize}
+
+### Correlation matrix (UNIT X FACTOR)
+
+![images/SIM-SCORESnmf-efa-cfa](images/SIM-SCORESnmf-efa-cfa.png){fig-align="center"}
+
+We know examine how the factors correlate \textit{within} each technique:
+
+\begin{itemize}
+\item in the CFA, each factor correlates perfectly (1) with itself and shows a correlation of 0.15 with the other factor, very close to the 0.20 value set in the simulation.
+\item in the EFA, this correlation is 0, which is still reasonably close to the simulated 0.20 value.
+\item \textcolor{red}{in the NMF, however, the correlation between the two factors is entirely different from what we set in the simulation (-0.73 instead of 0.20).}
+\end{itemize}
+
+\textcolor{red}{It almost appears that in NMF the pattern is reversed compared to CFA and EFA when looking at factor correlations in the two conditions,} additionally showing the correlation between factors specified in the simulation when correlating the factor loadings rather than the factor scores.

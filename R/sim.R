@@ -2,34 +2,30 @@ library(lavaan)
 library(MASS)
 library(bayesNMF)
 library(ragg)
-library(RColorBrewer)
 library(corrplot)
 library(psych)
 setwd("/Users/laura/Desktop/post/2 nmf/R")
 
-# solo valori positivi con approssimazione alla normale
-# in modo plausibile a livello biologico/psicologico
-
 N = 1000
 r = .20
 x = mvrnorm(N, mu=c(-1,-1), Sigma=matrix(c(1,r,
-                                         r,1),2,2))
+                                           r,1),2,2))
 
-Depressione = rbinom(N,50,plogis(x[,1]))
-Ansia = rbinom(N,50,plogis(x[,2]))
-cor(Depressione,Ansia)
+Depression = rbinom(N,50,plogis(x[,1]))
+Anxiety = rbinom(N,50,plogis(x[,2]))
+cor(Depression,Anxiety)
 
-Depr_1 = 1.2*Depressione+rbinom(N,50,.7)
-Depr_2 = 0.5*Depressione+rbinom(N,80,.5)
-Depr_3 = 0.8*Depressione+rbinom(N,40,.5)
-Depr_4 = 1.5*Depressione+rbinom(N,30,.3)
-Depr_5 = 1.0*Depressione+rbinom(N,100,.1)
+Depr_1 = 1.2*Depression+rbinom(N,50,.7)
+Depr_2 = 0.5*Depression+rbinom(N,80,.5)
+Depr_3 = 0.8*Depression+rbinom(N,40,.5)
+Depr_4 = 1.5*Depression+rbinom(N,30,.3)
+Depr_5 = 1.0*Depression+rbinom(N,100,.1)
 
-Anx_1 = 1.2*Ansia+rbinom(N,50,.7)
-Anx_2 = 0.5*Ansia+rbinom(N,80,.5)
-Anx_3 = 0.8*Ansia+rbinom(N,40,.5)
-Anx_4 = 1.5*Ansia+rbinom(N,30,.3)
-Anx_5 = 1.0*Ansia+rbinom(N,100,.1)
+Anx_1 = 1.2*Anxiety+rbinom(N,50,.7)
+Anx_2 = 0.5*Anxiety+rbinom(N,80,.5)
+Anx_3 = 0.8*Anxiety+rbinom(N,40,.5)
+Anx_4 = 1.5*Anxiety+rbinom(N,30,.3)
+Anx_5 = 1.0*Anxiety+rbinom(N,100,.1)
 
 df = data.frame(
   ID = 1:N,
@@ -42,24 +38,23 @@ model = "
 depr_latent =~ Depr_1+Depr_2+Depr_3+Depr_4+Depr_5
 anx_latent =~ Anx_1+Anx_2+Anx_3+Anx_4+Anx_5
 "
-fit = cfa(model, df, std.lv=T)
-summary(fit,standardized=T)
-# pred_depress = as.numeric( predict(fit) )
-# plot(pred_depress, Depressione)
-# cor(pred_depress, Depressione)
+SIMcfa = cfa(model, df, std.lv=T)
+summary(SIMcfa,standardized=T)
+SIMcfa_scores = predict(SIMcfa)
+# plot(pred_depress, Depression)
+# cor(pred_depress, Depression)
 
 ######################################################################## 
 # efa 
-efa <- fa(df[, 2:ncol(df)],
-          nfactors = 2,
-          fm       = "minres",
-          rotate   = "varimax",
-          scores   = "regression")
-quartz(); biplot.psych(efa, choose = c(1, 2))
+SIMefa <- fa(df[, 2:ncol(df)],
+             nfactors = 2,
+             fm       = "minres",
+             rotate   = "promax",
+             scores   = "regression")
+quartz(); biplot.psych(SIMefa, choose = c(1, 2))
 
-# ======================================
-# NMF (Bayesian NMF)
-# ======================================
+
+# NMF
 
 if (!dir.exists("output_sim")) dir.create("output_sim")
 
@@ -71,7 +66,7 @@ if (file.exists(file_result_sim)) {
 } else {
   message("Running bayesNMF()")
   
-  # La prima colonna è l'ID, quindi prendo solo le colonne 2: fine
+  # The first column is the ID, so only take columns 2 to the end
   M_t_2 <- t(as.matrix(df[, -1]))  
   dim(M_t_2)
   
@@ -91,7 +86,7 @@ MAPsim <- result_sim$get_MAP()
 Psim <- MAPsim$P
 Esim <- MAPsim$E
 
-# Calcolo media tra lower e upper se presenti
+# Compute mean between lower and upper
 if (is.list(Psim)) {
   if (all(c("lower", "upper") %in% names(Psim))) {
     Psim <- (Psim$lower + Psim$upper) / 2
@@ -111,28 +106,36 @@ if (is.list(Esim)) {
 Psim <- as.matrix(Psim)
 Esim <- as.matrix(Esim)
 
-# CONFRONTO: corplot efa cfa nmf
-# loadings EFA
-efa_loadingsSIMSIMSIMSIM <- as.matrix(efa$loadings[, 1:2]) # MATRIX item x factor
-colnames(efa_loadingsSIMSIMSIMSIM) <- paste0("efa_factor", 1:ncol(efa_loadingsSIMSIMSIMSIM))
+# COMPARISON: corrplot efa cfa nmf
+# factor scores individuals
+SIMnmf_scores = t(Esim) # MATRIX unit x factor
+colnames(SIMnmf_scores) = paste0("nmf-FACTORscores",1:2)
 
-# loadings NMF (P2)
-nmf_loadingsSIM <- round(Psim, 2)  # matrice item × 1
-rownames(nmf_loadingsSIM) <- paste0("item_", 1:nrow(nmf_loadingsSIM))
-colnames(nmf_loadingsSIM) <- paste0("nmf_factor", 1:ncol(nmf_loadingsSIM))
+SIMefa_scores = SIMefa$scores # MATRIX unit x factor
+colnames(SIMefa_scores) = paste0("efa-FACTORscores",1:2)
 
-allLoadings <- cbind(nmf_loadingsSIM, efa_loadingsSIMSIMSIMSIM)
+
+# EFA loadings
+SIMefa_loadings <- as.matrix(SIMefa$loadings[, 1:2]) # MATRIX item x factor
+rownames(SIMefa_loadings) <- paste0("item_", 1:nrow(SIMefa_loadings))
+colnames(SIMefa_loadings) <- paste0("EFA-factor", 1:ncol(SIMefa_loadings))
+
+# NMF loadings (Psim)
+SIMnmf_loadings <- Psim # MATRIX item x factor
+rownames(SIMnmf_loadings) <- paste0("item_", 1:nrow(SIMnmf_loadings))
+colnames(SIMnmf_loadings) <- paste0("NMF-factor", 1:ncol(SIMnmf_loadings))
+
+allLoadings <- cbind(SIMnmf_loadings, SIMefa_loadings)
 
 print(allLoadings)
 
-# CONFRONTO: corplot efa, cfa, nmf
-# loadings CFA
-cfa_loadingsSIM <- lavaan::inspect(fit, "std")$lambda
-round(cfa_loadingsSIM, 2)
-rownames(cfa_loadingsSIM) <- names(df)[-1]
-colnames(cfa_loadingsSIM) <- paste0("cfa_factor", 1:ncol(cfa_loadingsSIM))
+# COMPARISON: corrplot efa, cfa, nmf
+# CFA loadings
+SIMcfa_loadings <- lavaan::inspect(SIMcfa, "std")$lambda
+rownames(SIMcfa_loadings) <- names(df)[-1]
+#colnames(SIMcfa_loadings) <- paste0("CFA-factor", 1:ncol(SIMcfa_loadings))
 
-allLoadings2 <- cbind(nmf_loadingsSIM, efa_loadingsSIMSIMSIMSIM, cfa_loadingsSIM)
+allLoadings2 <- cbind(SIMnmf_loadings, SIMefa_loadings, SIMcfa_loadings)
 
 print(allLoadings2)
 
@@ -147,3 +150,17 @@ corrplot(cor(allLoadings2, use = "pairwise.complete.obs"),
          number.cex=0.9, tl.cex=1, mar=c(0,0,1,0), title="nmf vs efa vs cfa")
 dev.off()
 
+######################################################################## 
+# FACTOR SCORES comparison
+allScores3 = cbind(SIMefa_scores,SIMnmf_scores,SIMcfa_scores)
+
+agg_png("images/SIM-SCORESnmf-efa-cfa.png", width = 1400, height = 900, res = 150)
+corrplot(
+  cor(allScores3),
+  method = "color",   # fill cells with colors
+  type = "full",      # show full matrix
+  addCoef.col = "black",   # show correlation coefficients
+  number.cex = 0.7,        # text size for numbers
+  tl.cex = 0.8             # text size for labels
+)
+dev.off()
