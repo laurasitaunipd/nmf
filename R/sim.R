@@ -51,7 +51,9 @@ SIMefa <- fa(df[, 2:ncol(df)],
              fm       = "minres",
              rotate   = "promax",
              scores   = "regression")
-quartz(); biplot.psych(SIMefa, choose = c(1, 2))
+agg_png("images/SIMbiplot.png", width = 1400, height = 900, res = 150)
+biplot.psych(SIMefa, choose = c(1, 2))
+dev.off()
 
 
 # NMF
